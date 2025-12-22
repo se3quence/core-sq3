@@ -79,14 +79,34 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const router = useRouter();
   const { signIn, setActive, isLoaded } = useSignIn();
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
+    if (!validateForm()) {
       return;
     }
 
@@ -215,11 +235,25 @@ export default function Login() {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) {
+                            setErrors({ ...errors, email: undefined });
+                          }
+                        }}
                         placeholder="name@company.com"
-                        className="absolute inset-0 w-full h-full px-[17px] rounded-[8px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`absolute inset-0 w-full h-full px-[17px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.email
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                     </div>
+                    {errors.email && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password Input */}
@@ -240,9 +274,18 @@ export default function Login() {
                       <input
                         type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) {
+                            setErrors({ ...errors, password: undefined });
+                          }
+                        }}
                         placeholder="Enter your password"
-                        className="w-full h-[48px] px-[17px] pr-[48px] rounded-[8px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`w-full h-[48px] px-[17px] pr-[48px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.password
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                       <button
                         type="button"
@@ -256,6 +299,11 @@ export default function Login() {
                         )}
                       </button>
                     </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
 
                   {/* Login Button */}

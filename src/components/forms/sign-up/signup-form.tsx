@@ -82,24 +82,48 @@ export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
   const router = useRouter();
   const { signUp, setActive, isLoaded } = useSignUp();
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    if (!fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fullName || !email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (!validateForm()) {
       return;
     }
 
@@ -237,11 +261,25 @@ export default function SignUpForm() {
                       <input
                         type="text"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value);
+                          if (errors.fullName) {
+                            setErrors({ ...errors, fullName: undefined });
+                          }
+                        }}
                         placeholder="John Doe"
-                        className="absolute inset-0 w-full h-full px-[12px] rounded-[6px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`absolute inset-0 w-full h-full px-[12px] rounded-[6px] border font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.fullName
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                     </div>
+                    {errors.fullName && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.fullName}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email Input */}
@@ -253,11 +291,25 @@ export default function SignUpForm() {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) {
+                            setErrors({ ...errors, email: undefined });
+                          }
+                        }}
                         placeholder="name@company.com"
-                        className="absolute inset-0 w-full h-full px-[12px] rounded-[6px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`absolute inset-0 w-full h-full px-[12px] rounded-[6px] border font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.email
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                     </div>
+                    {errors.email && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password Input */}
@@ -269,9 +321,22 @@ export default function SignUpForm() {
                       <input
                         type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) {
+                            setErrors({ ...errors, password: undefined });
+                          }
+                          // Clear confirm password error if passwords match now
+                          if (errors.confirmPassword && e.target.value === confirmPassword) {
+                            setErrors({ ...errors, confirmPassword: undefined });
+                          }
+                        }}
                         placeholder="Enter your password"
-                        className="w-full h-[40px] px-[12px] pr-[38px] rounded-[6px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`w-full h-[40px] px-[12px] pr-[38px] rounded-[6px] border font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.password
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                       <button
                         type="button"
@@ -285,6 +350,11 @@ export default function SignUpForm() {
                         )}
                       </button>
                     </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
 
                   {/* Confirm Password Input */}
@@ -296,9 +366,18 @@ export default function SignUpForm() {
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (errors.confirmPassword) {
+                            setErrors({ ...errors, confirmPassword: undefined });
+                          }
+                        }}
                         placeholder="Confirm your password"
-                        className="w-full h-[40px] px-[12px] pr-[38px] rounded-[6px] border border-[#dedbe6] font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:border-[#4913ec] focus:outline-none focus:ring-1 focus:ring-[#4913ec]"
+                        className={`w-full h-[40px] px-[12px] pr-[38px] rounded-[6px] border font-['Inter:Regular',sans-serif] text-[14px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                          errors.confirmPassword
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                        }`}
                       />
                       <button
                         type="button"
@@ -312,6 +391,11 @@ export default function SignUpForm() {
                         )}
                       </button>
                     </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
                   </div>
 
                   {/* Sign Up Button */}

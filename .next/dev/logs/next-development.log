@@ -9378,3 +9378,39 @@ You can claim your keys by visiting https://dashboard.clerk.com/apps/claim?token
 [00:28:14.195] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
 [00:28:14.736] Server  LOG     ✓ Compiled in 108ms
 [00:28:14.740] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:01:43.425] Server  LOG     ✓ Compiled in 1586ms
+[01:01:45.410] Server  LOG     ✓ Compiled in 101ms
+[01:03:16.042] Server  LOG     ✓ Compiled in 465ms
+[01:03:16.146] Server  WARN    ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[01:03:18.722] Server  LOG     
+
+[Clerk]: You are running in keyless mode.
+You can claim your keys by visiting https://dashboard.clerk.com/apps/claim?token=5wsb5tdvqdk5zvuwl7lk22km38vu8fg7e7xq3awf&return_url=http%3A%2F%2Flocalhost%3A3000%2F
+
+[01:03:19.680] Server  ERROR   ⨯ Error: Module [project]/node_modules/next/dist/client/image-component.js [app-ssr] (ecmascript) was instantiated because it was required from module [project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/auth/sign-up/[[...rest]]/page { GLOBAL_ERROR_MODULE => "[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)", METADATA_0 => "[project]/src/app/favicon.ico.mjs { IMAGE => \"[project]/src/app/favicon.ico (static in ecmascript, tag client)\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)", MODULE_1 => "[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js Server Component)", MODULE_2 => "[project]/node_modules/next/dist/client/components/builtin/not-found.js [app-rsc] (ecmascript, Next.js Server Component)", MODULE_3 => "[project]/node_modules/next/dist/client/components/builtin/forbidden.js [app-rsc] (ecmascript, Next.js Server Component)", MODULE_4 => "[project]/node_modules/next/dist/client/components/builtin/unauthorized.js [app-rsc] (ecmascript, Next.js Server Component)", MODULE_5 => "[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)", MODULE_6 => "[project]/src/app/auth/layout.tsx [app-rsc] (ecmascript, Next.js Server Component)", MODULE_7 => "[project]/src/app/auth/sign-up/[[...rest]]/page.tsx [app-rsc] (ecmascript, Next.js Server Component)" } [app-rsc] (ecmascript) <locals>, but the module factory is not available.
+[01:03:20.447] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:03:23.129] Browser WARN    Image with src "http://localhost:3000/vercel.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[01:03:23.129] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:06:01.462] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:06:01.776] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:07:35.929] Server  LOG     ✓ Compiled in 282ms
+[01:07:47.809] Server  LOG     ✓ Compiled in 136ms
+[01:08:00.082] Server  LOG     ✓ Compiled in 62ms
+[01:08:14.649] Server  LOG     ✓ Compiled in 129ms
+[01:08:29.007] Server  LOG     ✓ Compiled in 148ms
+[01:10:24.711] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:10:26.915] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:10:38.236] Server  LOG     ✓ Compiled in 1017ms
+[01:11:48.050] Server  LOG     ✓ Compiled in 197ms
+[01:11:55.148] Server  LOG     ✓ Compiled in 60ms
+[01:12:02.956] Server  LOG     ✓ Compiled in 60ms
+[01:12:07.902] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:12:08.057] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:15:46.822] Server  LOG     
+
+[Clerk]: You are running in keyless mode.
+You can claim your keys by visiting https://dashboard.clerk.com/apps/claim?token=5wsb5tdvqdk5zvuwl7lk22km38vu8fg7e7xq3awf&return_url=http%3A%2F%2Flocalhost%3A3000%2F
+
+[01:15:47.572] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[01:15:50.810] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[01:25:48.705] Server  LOG     ✓ Compiled in 110ms

@@ -36,3 +36,53 @@ You can claim your keys by visiting https://dashboard.clerk.com/apps/claim?token
 [00:03:19.269] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:24:20.989Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
 [00:03:22.225] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:24:23.914Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
 [00:03:57.943] Server  LOG     ✓ Compiled in 211ms
+[00:04:22.763] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:04:23.565] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:25:25.283Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:04:23.565] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:04:25.813] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:25:27.528Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:04:25.813] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:04:56.813] Server  LOG     ✓ Compiled in 202ms
+[00:05:01.022] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:05:01.224] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:05:01.386] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:05:03.042] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:05:03.738] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:05:04.162] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:05.883Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:04.162] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:04.410] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:06.129Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:04.410] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:04.410] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:06.132Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:04.410] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:04.687] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:06.408Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:04.687] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:05.917] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:07.638Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:05.917] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:07.651] Server  LOG     ✓ Compiled in 65ms
+[00:05:11.627] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:13.346Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:11.627] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:05:20.576] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:26:22.297Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:05:20.576] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:06:08.675] Server  LOG     ✓ Compiled in 119ms
+[00:06:43.340] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:06:46.314] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:27:48.035Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:06:46.314] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:06:46.709] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:27:48.429Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ups","status":400}[0m
+[00:06:46.709] Browser ERROR   Google sign up error: {"clerkError":true,"code":"api_response_error","errors":[{"code":"session_exists","longMessage":"You're already signed in.","message":"Session already exists","meta":{}}],"status":400}
+[00:06:55.715] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:27:57.438Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ins","status":400}[0m
+[00:07:01.280] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:28:03.001Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ins","status":400}[0m
+[00:07:30.951] Browser ERROR   [1m[36m[Clerk Debug][0m [2m2025-12-24T04:28:32.667Z[0m [31mERROR[0m[90m[fapiClient][0m: [37mrequest failed[0m[2m {"method":"POST","path":"/client/sign_ins","status":400}[0m
+[00:07:34.580] Server  LOG     ✓ Compiled in 63ms
+[00:07:41.210] Server  LOG     ✓ Compiled in 111ms
+[00:07:46.162] Server  LOG     ✓ Compiled in 82ms
+[00:07:48.741] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:07:51.990] Server  LOG     ✓ Compiled in 44ms
+[00:08:00.963] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:08:02.997] Server  LOG     ✓ Compiled in 371ms
+[00:08:08.832] Browser WARN    [Cloudflare Turnstile] Turnstile has already been rendered in this container. Did you mean to render it multiple times?
+[00:08:12.895] Server  LOG     ✓ Compiled in 93ms
+[00:08:16.284] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+[00:08:22.843] Server  WARN    ⚠ "Failed to reload dynamic routes:" Error: You cannot define a route with the same specificity as a optional catch-all route ("/auth/sign-up" and "/auth/sign-up[[...rest]]").
+[00:08:23.019] Server  LOG     ✓ Compiled in 202ms
+[00:08:25.102] Server  LOG     ✓ Compiled in 96ms
+[00:08:36.547] Server  WARN    ⚠ "Failed to reload dynamic routes:" Error: You cannot define a route with the same specificity as a optional catch-all route ("/auth/sign-up" and "/auth/sign-up[[...rest]]").
+[00:09:01.156] Browser WARN    Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview

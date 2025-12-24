@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useSignUp } from '@clerk/nextjs';
+import SessionModal from '@/components/ui/session-modal';
 
 // Simple Eye icon component
 const EyeIcon = ({ className }: { className?: string }) => (
@@ -82,6 +83,7 @@ export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [errors, setErrors] = useState<{
     fullName?: string;
     email?: string;
@@ -184,9 +186,18 @@ export default function SignUpForm() {
       });
 
       if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        toast.success('Account created successfully!');
-        router.push('/dashboard');
+        try {
+          await setActive({ session: result.createdSessionId });
+          toast.success('Account created successfully!');
+          router.push('/dashboard');
+        } catch (activeError: any) {
+          const errorMsg = activeError?.message || activeError?.errors?.[0]?.message || '';
+          if (errorMsg.toLowerCase().includes('session already exists') || errorMsg.toLowerCase().includes('session')) {
+            setShowSessionModal(true);
+          } else {
+            toast.error('Failed to activate session. Please try again.');
+          }
+        }
       } else {
         // If email verification is required
         if (result.status === 'missing_requirements') {
@@ -631,6 +642,17 @@ export default function SignUpForm() {
           </div>
         </div>
       </div>
+
+      {/* Session Modal */}
+      <SessionModal
+        isOpen={showSessionModal}
+        onClose={() => {
+          setShowSessionModal(false);
+          router.push('/dashboard');
+        }}
+        title="Session Already Exists"
+        message="You are already logged in with an active session. Redirecting to your dashboard..."
+      />
     </div>
   );
 }

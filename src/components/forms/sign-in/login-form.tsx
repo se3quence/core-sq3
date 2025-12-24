@@ -80,25 +80,148 @@ export default function Login() {
     }
 
     if (!isLoaded) {
+      toast.error('Please wait, authentication is loading...');
       return;
     }
 
     setIsLoading(true);
     
     try {
-      await signIn.create({
-        identifier: email,
+      // Ensure email is properly formatted
+      const emailAddress = email.trim().toLowerCase();
+      
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)) {
+        toast.error('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Creating sign-in with identifier:', emailAddress);
+
+      // Create the sign-in attempt
+      const signInResult = await signIn.create({
+        identifier: emailAddress,
       });
 
-      await signIn.prepareFirstFactor({
-        strategy: 'email_code',
+      console.log('Sign-in created:', {
+        status: signInResult.status,
+        supportedFirstFactors: signInResult.supportedFirstFactors,
+        supportedStrategies: signInResult.supportedFirstFactors?.map((f: any) => f.strategy),
+        firstFactorVerification: signInResult.firstFactorVerification,
       });
+
+      // Check sign-in status
+      if (signInResult.status === 'needs_first_factor') {
+        // Check if email_code strategy is supported
+        const emailCodeFactor = signInResult.supportedFirstFactors?.find(
+          (factor: any) => factor.strategy === 'email_code'
+        );
+
+        if (!emailCodeFactor) {
+          const availableStrategies = signInResult.supportedFirstFactors?.map((f: any) => f.strategy) || [];
+          console.error('Email code strategy not supported. Available strategies:', availableStrategies);
+          toast.error(`Email code authentication is not available. Available methods: ${availableStrategies.join(', ')}`);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Preparing first factor with email_code strategy', {
+          factor: emailCodeFactor,
+        });
+
+        // Prepare the first factor - try with the factor object if available
+        try {
+          await signIn.prepareFirstFactor({
+            strategy: 'email_code',
+          });
+        } catch (prepareError: any) {
+          // If prepareFirstFactor fails, log detailed error
+          console.error('prepareFirstFactor error:', prepareError);
+          throw prepareError; // Re-throw to be caught by outer catch
+        }
+      } else if (signInResult.status === 'complete') {
+        // Sign-in is already complete (unlikely but possible)
+        console.log('Sign-in already complete, setting active session');
+        if (signInResult.createdSessionId) {
+          await setActive({ session: signInResult.createdSessionId });
+          toast.success('Login successful!');
+          router.push('/');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        console.error('Unexpected sign-in status:', signInResult.status);
+        toast.error(`Unexpected sign-in status: ${signInResult.status}. Please try again.`);
+        setIsLoading(false);
+        return;
+      }
 
       setIsOtpSent(true);
       toast.success('OTP code sent to your email!');
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'An error occurred while sending OTP';
-      toast.error(errorMessage);
+      // Enhanced error logging
+      console.error('=== Clerk Sign In Error ===');
+      console.error('Error object:', err);
+      
+      const clerkError = err?.clerkError || err;
+      const errors = clerkError?.errors || err?.errors || [];
+      const status = clerkError?.status || err?.status || 422;
+      
+      console.error('Status:', status);
+      console.error('Errors array:', errors);
+      console.error('Error message:', clerkError?.message || err?.message);
+      
+      if (Array.isArray(errors) && errors.length > 0) {
+        errors.forEach((error: any, index: number) => {
+          console.error(`Error ${index + 1}:`, {
+            code: error?.code,
+            message: error?.message,
+            longMessage: error?.longMessage,
+            meta: error?.meta,
+            param: error?.param,
+          });
+        });
+      }
+
+      // Extract user-friendly error message
+      let errorMessage = 'An error occurred while sending OTP';
+      let errorCode: string | undefined;
+
+      if (errors && errors.length > 0) {
+        const firstError = errors[0];
+        errorCode = firstError?.code;
+        errorMessage = firstError?.longMessage || firstError?.message || errorMessage;
+      } else {
+        errorMessage = clerkError?.message || err?.message || errorMessage;
+      }
+
+      // Handle specific error codes
+      if (errorCode === 'form_identifier_not_found') {
+        toast.error('No account found with this email address. Please sign up first.');
+      } else if (errorCode === 'form_strategy_not_supported' || errorCode === 'strategy_not_available') {
+        toast.error('Email code authentication is not enabled for sign-in. Please check your Clerk dashboard settings or use a different sign-in method.');
+      } else if (errorCode === 'form_param_format_invalid') {
+        toast.error('Invalid email format. Please check your email address.');
+      } else if (errorCode === 'form_param_missing') {
+        const param = errors[0]?.param || 'field';
+        toast.error(`Missing required field: ${param}`);
+      } else if (errorCode === 'form_identifier_not_verified') {
+        toast.error('Email address is not verified. Please verify your email first.');
+      } else if (errorCode === 'rate_limit_exceeded') {
+        toast.error('Too many attempts. Please wait a moment and try again.');
+      } else if (status === 422) {
+        // 422 Unprocessable Entity - show specific error or generic message
+        if (errorMessage && errorMessage !== 'An error occurred while sending OTP') {
+          toast.error(errorMessage);
+        } else if (errorCode) {
+          toast.error(`Validation error (${errorCode}). Please check the console for details.`);
+        } else {
+          toast.error('Validation error. Please check your email and Clerk configuration.');
+          console.error('422 error - Full details in console above');
+        }
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,15 +235,30 @@ export default function Login() {
     }
 
     if (!isLoaded) {
+      toast.error('Please wait, authentication is loading...');
+      return;
+    }
+
+    if (!signIn) {
+      toast.error('Sign-in session expired. Please start over.');
+      setIsOtpSent(false);
+      setOtp('');
       return;
     }
 
     setIsLoading(true);
     
     try {
+      console.log('Attempting to verify OTP code...');
+      
       const result = await signIn.attemptFirstFactor({
         strategy: 'email_code',
-        code: otp,
+        code: otp.trim(),
+      });
+
+      console.log('OTP verification result:', {
+        status: result.status,
+        createdSessionId: result.createdSessionId,
       });
 
       if (result.status === 'complete') {
@@ -131,8 +269,28 @@ export default function Login() {
         toast.error('Please complete additional verification steps');
       }
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'Invalid OTP code';
-      toast.error(errorMessage);
+      console.error('OTP verification error:', err);
+      
+      const clerkError = err?.clerkError || err;
+      const errors = clerkError?.errors || err?.errors || [];
+      const errorCode = errors?.[0]?.code;
+      const errorMessage = errors?.[0]?.longMessage || 
+                          errors?.[0]?.message || 
+                          clerkError?.message || 
+                          err?.message || 
+                          'Invalid OTP code';
+      
+      // Handle specific error codes
+      if (errorCode === 'form_code_incorrect') {
+        toast.error('Invalid OTP code. Please check and try again.');
+      } else if (errorCode === 'form_code_expired') {
+        toast.error('OTP code has expired. Please request a new one.');
+        setIsOtpSent(false);
+        setOtp('');
+      } else {
+        toast.error(errorMessage);
+      }
+      
       setErrors({ ...errors, otp: errorMessage });
     } finally {
       setIsLoading(false);
@@ -141,12 +299,22 @@ export default function Login() {
 
   const handleResendOtp = async () => {
     if (!isLoaded) {
+      toast.error('Please wait, authentication is loading...');
+      return;
+    }
+
+    if (!signIn) {
+      toast.error('Please start over. Sign-in session expired.');
+      setIsOtpSent(false);
+      setOtp('');
       return;
     }
 
     setIsLoading(true);
     
     try {
+      console.log('Resending OTP code...');
+      
       await signIn.prepareFirstFactor({
         strategy: 'email_code',
       });
@@ -154,7 +322,16 @@ export default function Login() {
       setOtp('');
       toast.success('New OTP code sent to your email!');
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'An error occurred while resending OTP';
+      console.error('Resend OTP error:', err);
+      
+      const clerkError = err?.clerkError || err;
+      const errors = clerkError?.errors || err?.errors || [];
+      const errorMessage = errors?.[0]?.longMessage || 
+                          errors?.[0]?.message || 
+                          clerkError?.message || 
+                          err?.message || 
+                          'An error occurred while resending OTP';
+      
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

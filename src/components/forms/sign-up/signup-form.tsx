@@ -161,14 +161,6 @@ export default function SignUpForm() {
     }
     
     try {
-      // Log the data being sent for debugging
-      console.log('Creating sign up with:', {
-        firstName,
-        lastName: lastName || firstName, // Use firstName as fallback for lastName
-        emailAddress: email.trim(),
-        passwordLength: password.length,
-      });
-
       // Ensure email is properly formatted
       const emailAddress = email.trim().toLowerCase();
       
@@ -178,11 +170,44 @@ export default function SignUpForm() {
         return;
       }
 
+      // Prepare data for Clerk
+      const finalFirstName = firstName.trim();
+      // Clerk may require lastName - use firstName as fallback if empty (common pattern)
+      const finalLastName = lastName.trim() || finalFirstName;
+      
+      // Log the data being sent for debugging
+      console.log('Creating sign up with:', {
+        firstName: finalFirstName,
+        lastName: finalLastName,
+        emailAddress: emailAddress,
+        passwordLength: password.length,
+        hasPassword: !!password,
+      });
+
+      // Validate that we have all required fields
+      if (!finalFirstName || finalFirstName.length === 0) {
+        toast.error('First name cannot be empty');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!emailAddress || emailAddress.length === 0) {
+        toast.error('Email cannot be empty');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!password || password.length === 0) {
+        toast.error('Password cannot be empty');
+        setIsLoading(false);
+        return;
+      }
+
       const result = await signUp.create({
-        firstName: firstName.trim(),
-        lastName: (lastName || firstName).trim(), // Clerk requires lastName, use firstName if empty
-        emailAddress,
-        password: password, // Don't trim password - whitespace might be intentional
+        firstName: finalFirstName,
+        lastName: finalLastName,
+        emailAddress: emailAddress,
+        password: password,
       });
 
       if (result.status === 'complete') {
@@ -209,99 +234,54 @@ export default function SignUpForm() {
         }
       }
     } catch (err: any) {
-      // Comprehensive error logging - handle non-serializable errors
-      let errorDetails: any = {};
-      try {
-        errorDetails = JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)));
-      } catch {
-        // If JSON.stringify fails, extract properties manually
-        errorDetails = {
-          message: err?.message,
-          name: err?.name,
-          stack: err?.stack,
-        };
-        
-        // Try to get all enumerable properties
-        for (const key in err) {
-          try {
-            errorDetails[key] = err[key];
-          } catch {
-            errorDetails[key] = '[Non-serializable]';
-          }
-        }
-      }
+      // Enhanced error logging for Clerk 422 errors
+      console.error('=== Clerk Sign Up Error ===');
+      console.error('Error object:', err);
       
-      console.error('Sign up error - Full error object:', errorDetails);
-      console.error('Sign up error - Raw error:', err);
+      // Try to extract Clerk-specific error information
+      const clerkError = err?.clerkError || err;
+      const errors = clerkError?.errors || err?.errors || [];
+      const status = clerkError?.status || err?.status || 422;
       
-      // Try different error property paths
-      const errors = err?.errors || err?.clerkError?.errors || err?.data?.errors || [];
-      const status = err?.status || err?.clerkError?.status || err?.statusCode || 422;
-      const statusText = err?.statusText || err?.clerkError?.statusText;
+      // Log all available error information
+      console.error('Status:', status);
+      console.error('Errors array:', errors);
+      console.error('Error message:', clerkError?.message || err?.message);
       
-      // Log error details
-      console.error('Sign up error details:', {
-        errors: errors,
-        status: status,
-        statusText: statusText,
-        message: err?.message,
-        clerkError: err?.clerkError,
-      });
-      
-      // Log all error details - access properties directly
-      if (errors && errors.length > 0) {
+      // Log each error in detail
+      if (Array.isArray(errors) && errors.length > 0) {
         errors.forEach((error: any, index: number) => {
-          // Access properties directly without serialization
-          const code = error?.code;
-          const message = error?.message;
-          const longMessage = error?.longMessage;
-          const meta = error?.meta;
-          
-          console.error(`Error ${index + 1}:`, {
-            code: code,
-            message: message,
-            longMessage: longMessage,
-            meta: meta,
+          console.error(`\nError ${index + 1}:`, {
+            code: error?.code,
+            message: error?.message,
+            longMessage: error?.longMessage,
+            meta: error?.meta,
+            param: error?.param,
+            fullError: error,
           });
-          
-          // Also log the raw error to see its structure
-          console.error(`Error ${index + 1} - Raw:`, error);
         });
       } else {
-        // If no errors array, try to access error properties directly
-        console.error('No errors array found. Trying direct access:');
-        console.error('err.errors:', err?.errors);
-        console.error('err.clerkError:', err?.clerkError);
-        console.error('err.message:', err?.message);
-        console.error('err.toString():', err?.toString?.());
-        
-        // Try to access ClerkError properties
-        if (err?.clerkError) {
-          console.error('clerkError.errors:', err.clerkError.errors);
-          console.error('clerkError.status:', err.clerkError.status);
-          console.error('clerkError.message:', err.clerkError.message);
-        }
+        // If no errors array, log the entire error structure
+        console.error('No errors array. Full error structure:', {
+          keys: Object.keys(err || {}),
+          clerkErrorKeys: err?.clerkError ? Object.keys(err.clerkError) : [],
+          toString: err?.toString?.(),
+        });
       }
       
-      // Extract error message from various possible locations
+      // Extract user-friendly error message
       let errorMessage = 'An error occurred during sign up';
       let errorCode: string | undefined;
       
-      try {
-        errorMessage = 
-          errors?.[0]?.longMessage || 
-          errors?.[0]?.message || 
-          err?.clerkError?.message ||
-          err?.message ||
-          errorMessage;
-        
-        errorCode = errors?.[0]?.code || err?.clerkError?.errors?.[0]?.code;
-      } catch {
-        // If extraction fails, use fallback
-        errorMessage = err?.message || errorMessage;
+      if (errors && errors.length > 0) {
+        const firstError = errors[0];
+        errorCode = firstError?.code;
+        errorMessage = firstError?.longMessage || firstError?.message || errorMessage;
+      } else {
+        errorMessage = clerkError?.message || err?.message || errorMessage;
       }
       
-      // Handle specific error cases
+      // Handle specific error codes
       if (errorCode === 'form_identifier_exists') {
         toast.error('An account with this email already exists. Please sign in instead.');
       } else if (errorCode === 'form_password_length_too_short') {
@@ -310,15 +290,22 @@ export default function SignUpForm() {
         toast.error('Password does not meet requirements.');
       } else if (errorCode === 'form_param_format_invalid') {
         toast.error('Invalid format. Please check your email and password.');
-      } else if (errorCode === 'captcha_invalid') {
-        toast.error('CAPTCHA verification failed. Please try again.');
+      } else if (errorCode === 'form_param_missing') {
+        const param = errors[0]?.param || 'field';
+        toast.error(`Missing required field: ${param}. Please check all fields.`);
+      } else if (errorCode === 'captcha_invalid' || errorCode === 'captcha_required') {
+        toast.error('CAPTCHA verification is required. Please complete the CAPTCHA and try again.');
       } else if (status === 422) {
-        // 422 Unprocessable Entity - validation error
-        toast.error(errorMessage || 'Validation error. Please check all fields and try again.');
+        // 422 Unprocessable Entity - show specific error or generic message
+        if (errorMessage && errorMessage !== 'An error occurred during sign up') {
+          toast.error(errorMessage);
+        } else {
+          toast.error('Validation error. Please check all fields and try again.');
+          console.error('422 error details - check console for more information');
+        }
       } else if (status === 400) {
         toast.error(errorMessage || 'Bad request. Please check your information and try again.');
       } else {
-        // Show the error message or a generic one
         const displayMessage = errorMessage || `Error: ${errorCode || status || 'Unknown error'}`;
         toast.error(displayMessage);
       }

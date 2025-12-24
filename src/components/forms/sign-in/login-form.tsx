@@ -6,46 +6,6 @@ import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useSignIn } from '@clerk/nextjs';
 
-// Simple Eye icon component
-const EyeIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-// Simple EyeOff icon component
-const EyeOffIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-    <line x1="2" x2="22" y1="2" y2="22" />
-  </svg>
-);
-
 // Google logo icon component
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg
@@ -76,17 +36,17 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 
 export default function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string;
-    password?: string;
+    otp?: string;
   }>({});
   const router = useRouter();
   const { signIn, setActive, isLoaded } = useSignIn();
 
-  const validateForm = () => {
+  const validateEmail = () => {
     const newErrors: typeof errors = {};
 
     if (!email.trim()) {
@@ -95,18 +55,27 @@ export default function Login() {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!password) {
-      newErrors.password = 'Password is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateOtp = () => {
+    const newErrors: typeof errors = {};
+
+    if (!otp.trim()) {
+      newErrors.otp = 'OTP code is required';
+    } else if (otp.trim().length !== 6) {
+      newErrors.otp = 'OTP code must be 6 digits';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateEmail()) {
       return;
     }
 
@@ -117,9 +86,41 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      const result = await signIn.create({
+      await signIn.create({
         identifier: email,
-        password,
+      });
+
+      await signIn.prepareFirstFactor({
+        strategy: 'email_code',
+      });
+
+      setIsOtpSent(true);
+      toast.success('OTP code sent to your email!');
+    } catch (err: any) {
+      const errorMessage = err.errors?.[0]?.message || 'An error occurred while sending OTP';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateOtp()) {
+      return;
+    }
+
+    if (!isLoaded) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'email_code',
+        code: otp,
       });
 
       if (result.status === 'complete') {
@@ -127,11 +128,33 @@ export default function Login() {
         toast.success('Login successful!');
         router.push('/');
       } else {
-        // Handle additional verification steps if needed
         toast.error('Please complete additional verification steps');
       }
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'An error occurred during sign in';
+      const errorMessage = err.errors?.[0]?.message || 'Invalid OTP code';
+      toast.error(errorMessage);
+      setErrors({ ...errors, otp: errorMessage });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!isLoaded) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      await signIn.prepareFirstFactor({
+        strategy: 'email_code',
+      });
+
+      setOtp('');
+      toast.success('New OTP code sent to your email!');
+    } catch (err: any) {
+      const errorMessage = err.errors?.[0]?.message || 'An error occurred while resending OTP';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -153,10 +176,6 @@ export default function Login() {
       const errorMessage = err.errors?.[0]?.message || 'An error occurred with Google sign in';
       toast.error(errorMessage);
     }
-  };
-
-  const handleForgotPassword = () => {
-    router.push('/auth/sign-in#reset-password');
   };
 
   const handleSignUp = () => {
@@ -225,102 +244,134 @@ export default function Login() {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
-                  {/* Email Input */}
-                  <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                    <label className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#131118] text-[14px] text-nowrap">
-                      <p className="leading-[21px]">Email</p>
-                    </label>
-                    <div className="bg-white h-[48px] relative rounded-[8px] shrink-0 w-full">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (errors.email) {
-                            setErrors({ ...errors, email: undefined });
-                          }
-                        }}
-                        placeholder="name@company.com"
-                        className={`absolute inset-0 w-full h-full px-[17px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
-                          errors.email
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
-                        }`}
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
-                        {errors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Password Input */}
-                  <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                    <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
+                {!isOtpSent ? (
+                  <form onSubmit={handleRequestOtp} className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
+                    {/* Email Input */}
+                    <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
                       <label className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#131118] text-[14px] text-nowrap">
-                        <p className="leading-[21px]">Password</p>
+                        <p className="leading-[21px]">Email</p>
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleForgotPassword}
-                        className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#4913ec] text-[14px] text-nowrap hover:underline"
-                      >
-                        <p className="leading-[20px]">Forgot password?</p>
-                      </button>
+                      <div className="bg-white h-[48px] relative rounded-[8px] shrink-0 w-full">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (errors.email) {
+                              setErrors({ ...errors, email: undefined });
+                            }
+                          }}
+                          placeholder="name@company.com"
+                          className={`absolute inset-0 w-full h-full px-[17px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
+                            errors.email
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                              : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                          }`}
+                        />
+                      </div>
+                      {errors.email && (
+                        <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                          {errors.email}
+                        </p>
+                      )}
                     </div>
-                    <div className="relative w-full">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          if (errors.password) {
-                            setErrors({ ...errors, password: undefined });
-                          }
-                        }}
-                        placeholder="Enter your password"
-                        className={`w-full h-[48px] px-[17px] pr-[48px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 ${
-                          errors.password
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                            : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-[12px] top-1/2 -translate-y-1/2 p-[4px] hover:bg-gray-100 rounded"
-                      >
-                        {showPassword ? (
-                          <EyeOffIcon className="w-5 h-5 text-[#6b6189]" />
-                        ) : (
-                          <EyeIcon className="w-5 h-5 text-[#6b6189]" />
-                        )}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Login Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="bg-[#4913ec] h-[48px] relative rounded-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] shrink-0 w-full hover:bg-[#3a0fc4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
-                      <div className="content-stretch flex items-center justify-center px-[16px] py-0 relative size-full">
-                        <div className="flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-center text-nowrap text-white tracking-[0.24px]">
-                          <p className="leading-[24px]">{isLoading ? 'Logging in...' : 'Log In'}</p>
+                    {/* Send OTP Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="bg-[#4913ec] h-[48px] relative rounded-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] shrink-0 w-full hover:bg-[#3a0fc4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
+                        <div className="content-stretch flex items-center justify-center px-[16px] py-0 relative size-full">
+                          <div className="flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-center text-nowrap text-white tracking-[0.24px]">
+                            <p className="leading-[24px]">{isLoading ? 'Sending...' : 'Send OTP Code'}</p>
+                          </div>
                         </div>
                       </div>
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
+                    {/* Email Display */}
+                    <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
+                      <label className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#131118] text-[14px] text-nowrap">
+                        <p className="leading-[21px]">Email</p>
+                      </label>
+                      <div className="bg-gray-50 h-[48px] relative rounded-[8px] shrink-0 w-full flex items-center px-[17px]">
+                        <p className="font-['Inter:Regular',sans-serif] text-[16px] text-[#6b6189]">{email}</p>
+                      </div>
                     </div>
-                  </button>
-                </form>
+
+                    {/* OTP Input */}
+                    <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
+                      <label className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#131118] text-[14px] text-nowrap">
+                        <p className="leading-[21px]">Enter OTP Code</p>
+                      </label>
+                      <div className="bg-white h-[48px] relative rounded-[8px] shrink-0 w-full">
+                        <input
+                          type="text"
+                          value={otp}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setOtp(value);
+                            if (errors.otp) {
+                              setErrors({ ...errors, otp: undefined });
+                            }
+                          }}
+                          placeholder="000000"
+                          maxLength={6}
+                          className={`absolute inset-0 w-full h-full px-[17px] rounded-[8px] border font-['Inter:Regular',sans-serif] text-[16px] text-center text-[#131118] placeholder:text-[#6b6189] focus:outline-none focus:ring-1 tracking-widest ${
+                            errors.otp
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                              : 'border-[#dedbe6] focus:border-[#4913ec] focus:ring-[#4913ec]'
+                          }`}
+                        />
+                      </div>
+                      {errors.otp && (
+                        <p className="text-red-500 text-[11px] leading-[14px] mt-[2px] font-['Inter:Regular',sans-serif]">
+                          {errors.otp}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={isLoading}
+                        className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#4913ec] text-[14px] text-nowrap hover:underline mt-1"
+                      >
+                        <p className="leading-[20px]">Resend OTP Code</p>
+                      </button>
+                    </div>
+
+                    {/* Verify OTP Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading || otp.length !== 6}
+                      className="bg-[#4913ec] h-[48px] relative rounded-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] shrink-0 w-full hover:bg-[#3a0fc4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
+                        <div className="content-stretch flex items-center justify-center px-[16px] py-0 relative size-full">
+                          <div className="flex flex-col font-['Inter:Bold',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-center text-nowrap text-white tracking-[0.24px]">
+                            <p className="leading-[24px]">{isLoading ? 'Verifying...' : 'Verify & Log In'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Back to Email */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOtpSent(false);
+                        setOtp('');
+                        setErrors({});
+                      }}
+                      className="flex flex-col font-['Inter:Medium',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#4913ec] text-[14px] text-nowrap hover:underline"
+                    >
+                      <p className="leading-[20px]">← Use different email</p>
+                    </button>
+                  </form>
+                )}
 
                 {/* Divider */}
                 <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">

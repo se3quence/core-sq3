@@ -59,9 +59,10 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			gravel: '#131118',
-  			iridium: '#6b6189'
-  		}
+			gravel: '#131118',
+			iridium: '#6b6189',
+			orange: '#ff9500'
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

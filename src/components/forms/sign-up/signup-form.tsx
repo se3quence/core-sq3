@@ -128,28 +128,65 @@ export default function SignUpForm() {
     }
 
     if (!isLoaded) {
+      toast.error('Please wait, authentication is loading...');
       return;
     }
 
     setIsLoading(true);
     
     // Split full name into first and last name
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
+    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+    const firstName = (nameParts[0] || fullName.trim()).trim();
+    const lastName = (nameParts.slice(1).join(' ') || '').trim();
+    
+    // Ensure we have valid values
+    if (!firstName || firstName.length === 0) {
+      toast.error('First name is required');
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!email.trim() || email.trim().length === 0) {
+      toast.error('Email is required');
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!password || password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      setIsLoading(false);
+      return;
+    }
     
     try {
-      const result = await signUp.create({
+      // Log the data being sent for debugging
+      console.log('Creating sign up with:', {
         firstName,
-        lastName,
-        emailAddress: email,
-        password,
+        lastName: lastName || firstName, // Use firstName as fallback for lastName
+        emailAddress: email.trim(),
+        passwordLength: password.length,
+      });
+
+      // Ensure email is properly formatted
+      const emailAddress = email.trim().toLowerCase();
+      
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress)) {
+        toast.error('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await signUp.create({
+        firstName: firstName.trim(),
+        lastName: (lastName || firstName).trim(), // Clerk requires lastName, use firstName if empty
+        emailAddress,
+        password: password, // Don't trim password - whitespace might be intentional
       });
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
         toast.success('Account created successfully!');
-        router.push('/');
+        router.push('/dashboard');
       } else {
         // If email verification is required
         if (result.status === 'missing_requirements') {
@@ -161,8 +198,119 @@ export default function SignUpForm() {
         }
       }
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'An error occurred during sign up';
-      toast.error(errorMessage);
+      // Comprehensive error logging - handle non-serializable errors
+      let errorDetails: any = {};
+      try {
+        errorDetails = JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      } catch {
+        // If JSON.stringify fails, extract properties manually
+        errorDetails = {
+          message: err?.message,
+          name: err?.name,
+          stack: err?.stack,
+        };
+        
+        // Try to get all enumerable properties
+        for (const key in err) {
+          try {
+            errorDetails[key] = err[key];
+          } catch {
+            errorDetails[key] = '[Non-serializable]';
+          }
+        }
+      }
+      
+      console.error('Sign up error - Full error object:', errorDetails);
+      console.error('Sign up error - Raw error:', err);
+      
+      // Try different error property paths
+      const errors = err?.errors || err?.clerkError?.errors || err?.data?.errors || [];
+      const status = err?.status || err?.clerkError?.status || err?.statusCode || 422;
+      const statusText = err?.statusText || err?.clerkError?.statusText;
+      
+      // Log error details
+      console.error('Sign up error details:', {
+        errors: errors,
+        status: status,
+        statusText: statusText,
+        message: err?.message,
+        clerkError: err?.clerkError,
+      });
+      
+      // Log all error details - access properties directly
+      if (errors && errors.length > 0) {
+        errors.forEach((error: any, index: number) => {
+          // Access properties directly without serialization
+          const code = error?.code;
+          const message = error?.message;
+          const longMessage = error?.longMessage;
+          const meta = error?.meta;
+          
+          console.error(`Error ${index + 1}:`, {
+            code: code,
+            message: message,
+            longMessage: longMessage,
+            meta: meta,
+          });
+          
+          // Also log the raw error to see its structure
+          console.error(`Error ${index + 1} - Raw:`, error);
+        });
+      } else {
+        // If no errors array, try to access error properties directly
+        console.error('No errors array found. Trying direct access:');
+        console.error('err.errors:', err?.errors);
+        console.error('err.clerkError:', err?.clerkError);
+        console.error('err.message:', err?.message);
+        console.error('err.toString():', err?.toString?.());
+        
+        // Try to access ClerkError properties
+        if (err?.clerkError) {
+          console.error('clerkError.errors:', err.clerkError.errors);
+          console.error('clerkError.status:', err.clerkError.status);
+          console.error('clerkError.message:', err.clerkError.message);
+        }
+      }
+      
+      // Extract error message from various possible locations
+      let errorMessage = 'An error occurred during sign up';
+      let errorCode: string | undefined;
+      
+      try {
+        errorMessage = 
+          errors?.[0]?.longMessage || 
+          errors?.[0]?.message || 
+          err?.clerkError?.message ||
+          err?.message ||
+          errorMessage;
+        
+        errorCode = errors?.[0]?.code || err?.clerkError?.errors?.[0]?.code;
+      } catch {
+        // If extraction fails, use fallback
+        errorMessage = err?.message || errorMessage;
+      }
+      
+      // Handle specific error cases
+      if (errorCode === 'form_identifier_exists') {
+        toast.error('An account with this email already exists. Please sign in instead.');
+      } else if (errorCode === 'form_password_length_too_short') {
+        toast.error('Password is too short. Please use at least 8 characters.');
+      } else if (errorCode === 'form_password_validation_failed') {
+        toast.error('Password does not meet requirements.');
+      } else if (errorCode === 'form_param_format_invalid') {
+        toast.error('Invalid format. Please check your email and password.');
+      } else if (errorCode === 'captcha_invalid') {
+        toast.error('CAPTCHA verification failed. Please try again.');
+      } else if (status === 422) {
+        // 422 Unprocessable Entity - validation error
+        toast.error(errorMessage || 'Validation error. Please check all fields and try again.');
+      } else if (status === 400) {
+        toast.error(errorMessage || 'Bad request. Please check your information and try again.');
+      } else {
+        // Show the error message or a generic one
+        const displayMessage = errorMessage || `Error: ${errorCode || status || 'Unknown error'}`;
+        toast.error(displayMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -170,17 +318,23 @@ export default function SignUpForm() {
 
   const handleGoogleSignUp = async () => {
     if (!isLoaded) {
+      toast.error('Please wait, authentication is loading...');
       return;
     }
 
     try {
       await signUp.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: '/',
-        redirectUrlComplete: '/',
+        redirectUrl: '/dashboard',
+        redirectUrlComplete: '/dashboard',
       });
     } catch (err: any) {
-      const errorMessage = err.errors?.[0]?.message || 'An error occurred with Google sign up';
+      console.error('Google sign up error:', err);
+      const errorMessage = 
+        err.errors?.[0]?.message || 
+        err.errors?.[0]?.longMessage ||
+        err?.message ||
+        'An error occurred with Google sign up';
       toast.error(errorMessage);
     }
   };
@@ -397,6 +551,9 @@ export default function SignUpForm() {
                       </p>
                     )}
                   </div>
+
+                  {/* Clerk CAPTCHA */}
+                  <div id="clerk-captcha" className="w-full" />
 
                   {/* Sign Up Button */}
                   <button
